@@ -6,7 +6,6 @@ opencv-python-headless==4.10.0.84
 numpy==2.0.0
 torch==2.13.0
 torchvision==0.28.0
-torchaudio==2.13.0
 ultralytics==8.4.135
 gunicorn==22.0.0
 Pillow==12.1.1
