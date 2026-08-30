@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — Bluror</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #080c14; --bg2: #0d1220; --surface: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.14);
+            --accent: #3b82f6; --accent-glow: rgba(59,130,246,0.3); --accent2: #06b6d4;
+            --text: #f1f5f9; --text-muted: #64748b; --text-sub: #94a3b8;
+            --danger: #ef4444; --success: #22c55e; --warning: #f59e0b;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        nav {
+            background: rgba(8,12,20,0.92); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border); padding: 0 32px;
+            display: flex; align-items: center; justify-content: space-between; height: 64px;
+            position: sticky; top: 0; z-index: 200;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--text); text-decoration: none; }
+        .nav-brand .icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--danger), #f97316); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-brand span { color: var(--danger); }
+        .nav-links { display: flex; align-items: center; gap: 4px; }
+        .nav-link { padding: 8px 14px; border-radius: 8px; color: var(--text-sub); font-size: 14px; text-decoration: none; transition: all 0.2s; }
+        .nav-link:hover { background: var(--surface); color: var(--text); }
+        .nav-link.active { background: rgba(239,68,68,0.12); color: var(--danger); }
+        .nav-link.warn { color: var(--warning); }
+        .nav-link.red { color: var(--danger); }
+
+        /* Tab nav */
+        .tab-bar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; gap: 0; }
+        .tab-btn { padding: 14px 20px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-sub); font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .main { max-width: 1280px; margin: 0 auto; padding: 32px 24px 60px; }
+
+        /* Tab panels */
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Stat grid */
+        .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 28px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; transition: border-color 0.2s, transform 0.2s; }
+        .stat-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+        .stat-card .label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+        .stat-card .value { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+        .stat-card .sub { font-size: 12px; color: var(--text-muted); }
+        .c-blue .value { color: var(--accent); }
+        .c-green .value { color: var(--success); }
+        .c-yellow .value { color: var(--warning); }
+        .c-cyan .value { color: var(--accent2); }
+        .c-red .value { color: var(--danger); }
+
+        /* Charts */
+        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 28px; }
+        .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+        .chart-card h3 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-sub); margin-bottom: 16px; }
+        .charts-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+
+        /* Period tabs */
+        .period-tabs { display: flex; gap: 4px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+        .period-btn { padding: 5px 12px; border-radius: 7px; border: none; background: transparent; color: var(--text-muted); font-family: 'Sarabun', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .period-btn.active { background: var(--accent); color: #fff; }
+
+        /* Top users */
+        .top-list { display: flex; flex-direction: column; gap: 8px; }
+        .top-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 10px; }
+        .top-rank { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: var(--text-muted); width: 24px; text-align: center; }
+        .top-rank.gold { color: #fbbf24; }
+        .top-rank.silver { color: #94a3b8; }
+        .top-rank.bronze { color: #b45309; }
+        .top-name { flex: 1; font-size: 14px; font-weight: 500; }
+        .top-count { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--accent); }
+
+        /* Search bar */
+        .search-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .search-input {
+            flex: 1; min-width: 200px; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 10px 14px; color: var(--text);
+            font-family: 'Sarabun', sans-serif; font-size: 14px; outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--accent); }
+        .filter-select {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 14px; color: var(--text); font-family: 'Sarabun', sans-serif;
+            font-size: 14px; outline: none; cursor: pointer;
+        }
+        .filter-select option { background: #1e293b; }
+
+        /* Table */
+        .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { background: rgba(255,255,255,0.03); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(255,255,255,0.02); }
+        tbody td { padding: 12px 16px; font-size: 13px; color: var(--text-sub); vertical-align: middle; }
+        tbody td b { color: var(--text); }
+
+        /* Badges */
+        .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .b-admin { background: rgba(239,68,68,0.15); color: #fca5a5; }
+        .b-user  { background: rgba(100,116,139,0.2); color: #94a3b8; }
+        .b-blur  { background: rgba(59,130,246,0.15); color: #93c5fd; }
+        .b-pix   { background: rgba(6,182,212,0.15); color: #67e8f9; }
+        .b-stick { background: rgba(245,158,11,0.15); color: #fcd34d; }
+
+        /* Avatar mini */
+        .av-mini { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(59,130,246,0.3); }
+        .av-mini-ph { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,var(--accent),var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 15px; border: 2px solid rgba(59,130,246,0.3); }
+
+        /* Action buttons */
+        .act-row { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn-xs { padding: 5px 10px; border-radius: 7px; font-family: 'Sarabun', sans-serif; font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+        .btn-warn  { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.25); }
+        .btn-warn:hover  { background: rgba(245,158,11,0.25); }
+        .btn-red   { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+        .btn-red:hover   { background: rgba(239,68,68,0.22); }
+        .btn-blue  { background: rgba(59,130,246,0.12); color: var(--accent); border: 1px solid rgba(59,130,246,0.2); }
+        .btn-blue:hover  { background: rgba(59,130,246,0.22); }
+
+        /* Image grid */
+        .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+        .img-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: border-color 0.2s; }
+        .img-tile:hover { border-color: var(--border-hover); }
+        .img-tile img { width: 100%; height: 130px; object-fit: cover; display: block; }
+        .img-tile-body { padding: 10px 12px; }
+        .img-tile-user { font-size: 12px; font-weight: 600; color: var(--danger); margin-bottom: 4px; }
+        .img-tile-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+        .img-tile-acts { display: flex; gap: 6px; }
+        .img-tile-acts a, .img-tile-acts button { flex: 1; padding: 5px; border-radius: 6px; text-align: center; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; border: none; transition: all 0.2s; }
+        .dl-btn { background: rgba(59,130,246,0.1); color: var(--accent); }
+        .dl-btn:hover { background: rgba(59,130,246,0.2); }
+        .del-btn { background: rgba(239,68,68,0.1); color: var(--danger); font-family: 'Sarabun', sans-serif; }
+        .del-btn:hover { background: rgba(239,68,68,0.2); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #0d1220; border: 1px solid var(--border); border-radius: 20px; padding: 32px; width: 420px; max-width: 90vw; animation: popIn 0.2s ease; }
+        @keyframes popIn { from { opacity:0; transform:scale(0.93); } to { opacity:1; transform:scale(1); } }
+        .modal-icon { font-size: 40px; margin-bottom: 12px; text-align: center; }
+        .modal h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+        .modal p { color: var(--text-muted); font-size: 14px; text-align: center; margin-bottom: 24px; }
+        .modal-btns { display: flex; gap: 10px; }
+        .modal-cancel { flex: 1; padding: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text-sub); font-family: 'Sarabun', sans-serif; font-size: 14px; cursor: pointer; }
+        .modal-confirm { flex: 1; padding: 11px; background: var(--danger); border: none; border-radius: 10px; color: #fff; font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+        /* Role modal */
+        .role-select { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 14px; margin-bottom: 20px; outline: none; }
+        .role-select option { background: #1e293b; }
+        .modal-save { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 10px; color: #fff; font-family: 'Sarabun', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; }
+
+        .section-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .empty-state { text-align: center; padding: 48px; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/admin" class="nav-brand"><div class="icon">👑</div>Blu<span>ror</span> Admin</a>
+    <div class="nav-links">
+        <a href="/admin/knowledge" class="nav-link warn">📝 จัดการความรู้</a>
+        <a href="/" class="nav-link">← หน้าผู้ใช้</a>
+        <a href="/logout" class="nav-link red">ออก</a>
+    </div>
+</nav>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('overview',this)">📊 ภาพรวม</button>
+    <button class="tab-btn" onclick="switchTab('users',this)">👥 จัดการผู้ใช้</button>
+    <button class="tab-btn" onclick="switchTab('images',this)">🖼️ จัดการรูปภาพ</button>
+</div>
+
+<div class="main">
+
+<!-- ============ TAB: OVERVIEW ============ -->
+<div class="tab-panel active" id="tab-overview">
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+        <div class="stat-card c-blue">
+            <div class="label">👥 ผู้ใช้ทั้งหมด</div>
+            <div class="value">{{ users|length }}</div>
+            <div class="sub">บัญชีที่ลงทะเบียน</div>
+        </div>
+        <div class="stat-card c-green">
+            <div class="label">🖼️ รูปที่ประมวลผล</div>
+            <div class="value">{{ images|length }}</div>
+            <div class="sub">ตลอดระยะเวลา</div>
+        </div>
+        <div class="stat-card c-yellow">
+            <div class="label">📊 เฉลี่ย/คน</div>
+            <div class="value">{{ avg_img }}</div>
+            <div class="sub">รูปต่อ user</div>
+        </div>
+        <div class="stat-card c-cyan">
+            <div class="label">🛡️ Blur+Pixelate</div>
+            <div class="value">{{ images|selectattr('blur_type','ne','sticker')|list|length }}</div>
+            <div class="sub">รูปที่ถูกเบลอ</div>
+        </div>
+        <div class="stat-card c-red">
+            <div class="label">🏷️ Sticker</div>
+            <div class="value">{{ images|selectattr('blur_type','eq','sticker')|list|length }}</div>
+            <div class="sub">Sticker overlay</div>
+        </div>
+    </div>
+
+    <!-- Charts row 1 -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+                <h3 style="margin:0;">📈 จำนวนรูปภาพที่ประมวลผล</h3>
+                <div class="period-tabs">
+                    <button class="period-btn active" onclick="setPeriod('daily',this)">รายวัน</button>
+                    <button class="period-btn" onclick="setPeriod('weekly',this)">รายสัปดาห์</button>
+                    <button class="period-btn" onclick="setPeriod('monthly',this)">รายเดือน</button>
+                </div>
+            </div>
+            <canvas id="lineChart" height="90"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>🎨 สัดส่วน Effect</h3>
+            <canvas id="doughnutChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Charts row 2 -->
+    <div class="charts-row2">
+        <div class="chart-card">
+            <h3>👥 ผู้ใช้ใหม่ 7 วันล่าสุด</h3>
+            <canvas id="userChart" height="100"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>🏆 ผู้ใช้งานมากที่สุด</h3>
+            <div class="top-list">
+                {% for u in top_users %}
+                <div class="top-item">
+                    <div class="top-rank {% if loop.index==1 %}gold{% elif loop.index==2 %}silver{% elif loop.index==3 %}bronze{% endif %}">
+                        {{ loop.index }}
+                    </div>
+                    <div class="top-name">
+                        <div style="font-weight:600;color:var(--text);">{{ u.full_name or u.username }}</div>
+                        <div style="font-size:11px;color:var(--text-muted);">@{{ u.username }}</div>
+                    </div>
+                    <div class="top-count">{{ u.cnt }} รูป</div>
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding:24px;">ยังไม่มีข้อมูล</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ TAB: USERS ============ -->
+<div class="tab-panel" id="tab-users">
+    <div class="section-title">👥 จัดการผู้ใช้งาน</div>
+
+    <!-- Search -->
+    <div class="search-bar">
+        <input type="text" class="search-input" id="userSearch" placeholder="🔍 ค้นหาชื่อ / username / email..." oninput="filterUsers()">
+        <select class="filter-select" id="roleFilter" onchange="filterUsers()">
+            <option value="">ทุก Role</option>
+            <option value="admin">Admin</option>
+            <option value="user">User</option>
+        </select>
+    </div>
+
+    <div class="table-wrap">
+        <table id="userTable">
+            <thead>
+                <tr>
+                    <th>ID</th><th>รูป</th><th>ชื่อ-นามสกุล</th><th>Username</th>
+                    <th>Email</th><th>Role</th><th>รูปภาพ</th><th>วันที่สมัคร</th><th>จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for u in users %}
+            <tr data-username="{{ u.username|lower }}"
+                data-fullname="{{ (u.full_name or '')|lower }}"
+                data-email="{{ (u.email or '')|lower }}"
+                data-role="{{ u.role }}">
+                <td>#{{ u.id }}</td>
+                <td>
+                    {% if u.avatar %}
+                    <img src="/{{ u.avatar }}" class="av-mini">
+                    {% else %}
+                    <div class="av-mini-ph">👤</div>
+                    {% endif %}
+                </td>
+                <td><b>{{ u.full_name or '—' }}</b></td>
+                <td>{{ u.username }}</td>
+                <td style="font-size:12px;">{{ u.email or '—' }}</td>
+                <td>
+                    {% if u.role == 'admin' %}
+                    <span class="badge b-admin">👑 Admin</span>
+                    {% else %}
+                    <span class="badge b-user">User</span>
+                    {% endif %}
+                </td>
+                <td style="text-align:center;"><b>{{ u.image_count }}</b></td>
+                <td style="font-size:12px;">{{ u.created_at }}</td>
+                <td>
+                    <div class="act-row">
+                        {% if u.id != session['user_id'] %}
+                        <button class="btn-xs btn-warn"
+                            onclick="openRoleModal({{ u.id }},'{{ u.username }}','{{ u.role }}')">
+                            ✏️ Role
+                        </button>
+                        <button class="btn-xs btn-red"
+                            onclick="openDeleteUserModal({{ u.id }},'{{ u.username }}')">
+                            🗑️ ลบ
+                        </button>
+                        {% else %}
+                        <span style="font-size:12px;color:var(--text-muted);">— ตัวเอง</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ============ TAB: IMAGES ============ -->
+<div class="tab-panel" id="tab-images">
+    <div class="section-title">🖼️ จัดการรูปภาพทั้งหมด</div>
+
+    <!-- Filter -->
+    <div class="search-bar">
+        <input type="text" class="search-input" id="imgSearch" placeholder="🔍 ค้นหาตาม username..." oninput="filterImages()">
+        <select class="filter-select" id="effectFilter" onchange="filterImages()">
+            <option value="">ทุก Effect</option>
+            <option value="blur">Blur</option>
+            <option value="mosaic">Mosaic</option>
+            <option value="pixelate">Pixelate</option>
+            <option value="sticker">Sticker</option>
+        </select>
+    </div>
+
+    {% if images|length == 0 %}
+    <div class="empty-state">ยังไม่มีรูปภาพ</div>
+    {% else %}
+    <div class="img-grid" id="imgGrid">
+        {% for img in images %}
+        <div class="img-tile"
+             data-user="{{ img.username|lower }}"
+             data-effect="{{ img.blur_type }}">
+            <img src="/{{ img['processed_path'] }}" alt="processed" loading="lazy">
+            <div class="img-tile-body">
+                <div class="img-tile-user">@{{ img.username }}</div>
+                <div class="img-tile-meta">
+                    {% if img['blur_type'] == 'sticker' %}<span class="badge b-stick">Sticker</span>
+                    {% elif img['blur_type'] == 'pixelate' %}<span class="badge b-pix">Pixelate</span>
+                    {% else %}<span class="badge b-blur">Blur</span>{% endif %}
+                    <span style="margin-left:4px;font-size:10px;">{{ img['created_at'] }}</span>
+                </div>
+                <div class="img-tile-acts">
+                    <a href="/{{ img['processed_path'] }}" download class="dl-btn">📥 โหลด</a>
+                    <button class="del-btn"
+                        onclick="openDeleteImgModal({{ img['id'] }})">🗑️ ลบ</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+</div><!-- /main -->
+
+<!-- ===== Modal: เปลี่ยน Role ===== -->
+<div class="modal-overlay" id="roleModal">
+    <div class="modal">
+        <div class="modal-icon">✏️</div>
+        <h3>เปลี่ยน Role ผู้ใช้</h3>
+        <p id="roleModalDesc">เปลี่ยน role ของ <b></b></p>
+        <form id="roleForm" method="POST">
+            <select name="role" class="role-select" id="roleSelect">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button type="submit" class="modal-save">💾 บันทึก</button>
+        </form>
+        <div style="margin-top:10px;">
+            <button class="modal-cancel" style="width:100%;" onclick="closeModal('roleModal')">ยกเลิก</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Modal: ลบ User ===== -->
+<div class="modal-overlay" id="deleteUserModal">
+    <div class="modal">
+        <div class="modal-icon">🗑️</div>
+        <h3>ลบผู้ใช้งาน</h3>
+        <p id="deleteUserDesc">ลบบัญชีนี้และข้อมูลทั้งหมดถาวร</p>
+        <div class="modal-btns">
+            <button class="modal-cancel" onclick="closeModal('deleteUserModal')">ยกเลิก</button>
+            <form id="deleteUserForm" method="POST" style="flex:1;margin:0;">
+                <button type="submit" class="modal-confirm" style="width:100%;">ลบเลย</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Modal: ลบ Image ===== -->
+<div class="modal-overlay" id="deleteImgModal">
+    <div class="modal">
+        <div class="modal-icon">🖼️</div>
+        <h3>ลบรูปภาพ</h3>
+        <p>รูปภาพจะถูกลบถาวร ไม่สามารถกู้คืนได้</p>
+        <div class="modal-btns">
+            <button class="modal-cancel" onclick="closeModal('deleteImgModal')">ยกเลิก</button>
+            <form id="deleteImgForm" method="POST" style="flex:1;margin:0;">
+                <button type="submit" class="modal-confirm" style="width:100%;">ลบเลย</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="statsRaw" data-json="{{ stats_json | e }}" style="display:none;"></div>
+
+<script>
+var STATS = JSON.parse(document.getElementById('statsRaw').getAttribute('data-json'));
+var tickColor = '#64748b', gridColor = 'rgba(255,255,255,0.05)';
+function lineOpts() {
+    return { plugins:{legend:{display:false}}, scales:{
+        x:{ticks:{color:tickColor,font:{family:'Sarabun',size:11}},grid:{color:gridColor}},
+        y:{ticks:{color:tickColor,font:{family:'Sarabun',size:11},precision:0},grid:{color:gridColor},beginAtZero:true}
+    }};
+}
+var lineChart = new Chart(document.getElementById('lineChart'), {
+    type:'line',
+    data:{ labels:STATS.daily.labels, datasets:[{
+        label:'รูปภาพ', data:STATS.daily.values,
+        borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.12)',
+        fill:true, tension:0.4, pointBackgroundColor:'#3b82f6', pointRadius:4
+    }]},
+    options: lineOpts()
+});
+function setPeriod(p,btn) {
+    document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    lineChart.data.labels = STATS[p].labels;
+    lineChart.data.datasets[0].data = STATS[p].values;
+    lineChart.update();
+}
+new Chart(document.getElementById('doughnutChart'), {
+    type:'doughnut',
+    data:{ labels:['Blur/Mosaic','Pixelate','Sticker'],
+           datasets:[{data:[STATS.effects.blur,STATS.effects.pixelate,STATS.effects.sticker],
+                      backgroundColor:['#3b82f6','#06b6d4','#f59e0b'],borderWidth:0,borderRadius:4}]},
+    options:{plugins:{legend:{labels:{color:'#94a3b8',font:{family:'Sarabun'}}}},cutout:'65%'}
+});
+new Chart(document.getElementById('userChart'), {
+    type:'bar',
+    data:{ labels:STATS.new_users.labels, datasets:[{
+        label:'ผู้ใช้ใหม่', data:STATS.new_users.values,
+        backgroundColor:'rgba(34,197,94,0.5)', borderColor:'#22c55e',
+        borderWidth:1, borderRadius:6
+    }]},
+    options: lineOpts()
+});
+
+// Tab switch
+function switchTab(id, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+id).classList.add('active');
+}
+
+// Filter users
+function filterUsers() {
+    var q    = document.getElementById('userSearch').value.toLowerCase();
+    var role = document.getElementById('roleFilter').value;
+    document.querySelectorAll('#userTable tbody tr').forEach(function(tr) {
+        var un = tr.dataset.username || '';
+        var fn = tr.dataset.fullname || '';
+        var em = tr.dataset.email   || '';
+        var rl = tr.dataset.role    || '';
+        var matchQ    = !q    || un.includes(q) || fn.includes(q) || em.includes(q);
+        var matchRole = !role || rl === role;
+        tr.style.display = (matchQ && matchRole) ? '' : 'none';
+    });
+}
+
+// Filter images
+function filterImages() {
+    var q  = document.getElementById('imgSearch').value.toLowerCase();
+    var ef = document.getElementById('effectFilter').value;
+    document.querySelectorAll('#imgGrid .img-tile').forEach(function(tile) {
+        var u = tile.dataset.user   || '';
+        var e = tile.dataset.effect || '';
+        var mq = !q  || u.includes(q);
+        var me = !ef || e === ef;
+        tile.style.display = (mq && me) ? '' : 'none';
+    });
+}
+
+// Modals
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(function(el) {
+    el.addEventListener('click', function(e) { if(e.target===this) this.classList.remove('open'); });
+});
+
+function openRoleModal(id, username, currentRole) {
+    document.getElementById('roleForm').action = '/admin/user/role/' + id;
+    document.getElementById('roleModalDesc').innerHTML = 'เปลี่ยน role ของ <b>@' + username + '</b>';
+    document.getElementById('roleSelect').value = currentRole;
+    document.getElementById('roleModal').classList.add('open');
+}
+
+function openDeleteUserModal(id, username) {
+    document.getElementById('deleteUserForm').action = '/admin/user/delete/' + id;
+    document.getElementById('deleteUserDesc').innerHTML =
+        'ลบบัญชี <b>@' + username + '</b> และรูปภาพทั้งหมดถาวร ไม่สามารถกู้คืนได้';
+    document.getElementById('deleteUserModal').classList.add('open');
+}
+
+function openDeleteImgModal(id) {
+    document.getElementById('deleteImgForm').action = '/admin/image/delete/' + id;
+    document.getElementById('deleteImgModal').classList.add('open');
+}
+
+// check hash on load
+if(location.hash === '#users') switchTab('users', document.querySelectorAll('.tab-btn')[1]);
+if(location.hash === '#images') switchTab('images', document.querySelectorAll('.tab-btn')[2]);
+</script>
+</body>
+</html>

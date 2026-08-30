@@ -1,0 +1,20 @@
+# Secrets — ห้ามอัพขึ้น GitHub เด็ดขาด
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Uploaded / generated images (ไม่ควร commit รูปผู้ใช้)
+static/uploads/*
+static/processed/*
+!static/uploads/.gitkeep
+!static/processed/.gitkeep
+
+# OS / editor
+.DS_Store
+.vscode/

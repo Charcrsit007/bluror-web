@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกร็ดความรู้ — Bluror</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080c14; --surface: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.08);
+            --accent: #3b82f6; --accent2: #06b6d4;
+            --text: #f1f5f9; --text-muted: #64748b; --text-sub: #94a3b8;
+            --success: #22c55e; --danger: #ef4444; --warning: #f59e0b;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        nav {
+            background: rgba(8,12,20,0.9); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border); padding: 0 32px;
+            display: flex; align-items: center; justify-content: space-between; height: 64px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--text); text-decoration: none; }
+        .nav-brand .icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-brand span { color: var(--accent); }
+        .nav-links { display: flex; align-items: center; gap: 4px; }
+        .nav-link { padding: 8px 14px; border-radius: 8px; color: var(--text-sub); font-size: 14px; text-decoration: none; transition: all 0.2s; }
+        .nav-link:hover { background: var(--surface); color: var(--text); }
+        .nav-link.active { background: rgba(59,130,246,0.12); color: var(--accent); }
+        .nav-link.danger { color: var(--danger); }
+
+        .main { max-width: 800px; margin: 0 auto; padding: 40px 24px; }
+        .page-header { text-align: center; margin-bottom: 48px; }
+        .page-header h1 { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; margin-bottom: 12px; }
+        .page-header h1 span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+        .page-header p { color: var(--text-muted); font-size: 16px; }
+
+        /* Category filter */
+        .filters { display: flex; gap: 8px; margin-bottom: 32px; justify-content: center; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 18px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-sub); font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.08); }
+
+        /* Article card */
+        .article {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px 32px;
+            margin-bottom: 20px; transition: border-color 0.2s, transform 0.2s;
+        }
+        .article:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-2px); }
+        .article-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .cat-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .cat-editing { background: rgba(59,130,246,0.15); color: #93c5fd; }
+        .cat-pdpa { background: rgba(245,158,11,0.15); color: #fcd34d; }
+        .cat-ai_tech { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+        .article h4 { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+        .article p { color: var(--text-sub); font-size: 15px; line-height: 1.85; }
+        .article-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .article-footer span { font-size: 13px; color: var(--text-muted); }
+        .vote-row { display: flex; gap: 8px; }
+        .vote-btn {
+            padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-sub); font-family: 'Sarabun', sans-serif;
+            font-size: 13px; font-weight: 500; text-decoration: none; display: flex; align-items: center; gap: 6px;
+            transition: all 0.2s;
+        }
+        .vote-btn:hover { border-color: var(--success); color: var(--success); background: rgba(34,197,94,0.07); }
+        .vote-btn.dislike:hover { border-color: var(--danger); color: var(--danger); background: rgba(239,68,68,0.07); }
+        .vote-btn.voted-like { border-color: var(--success); color: var(--success); background: rgba(34,197,94,0.15); font-weight: 700; }
+        .vote-btn.voted-dislike { border-color: var(--danger); color: var(--danger); background: rgba(239,68,68,0.15); font-weight: 700; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-brand"><div class="icon">🛡️</div>Blu<span>ror</span></a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">อัปโหลดรูป</a>
+            <a href="/history" class="nav-link">📂 ประวัติ</a>
+            <a href="/knowledge" class="nav-link active">📚 ความรู้</a>
+            <a href="/profile" class="nav-link">⚙️ โปรไฟล์</a>
+            <a href="/logout" class="nav-link danger">ออก</a>
+        </div>
+    </nav>
+
+    <div class="main">
+        <div class="page-header">
+            <h1>💡 สาระน่ารู้ <span>AI & PDPA</span></h1>
+            <p>ความรู้เกี่ยวกับการปรับแต่งภาพ เทคโนโลยี AI และกฎหมายคุ้มครองข้อมูลส่วนบุคคล</p>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" onclick="filter('all',this)">ทั้งหมด</button>
+            <button class="filter-btn" onclick="filter('editing',this)">🎨 ปรับแต่งภาพ</button>
+            <button class="filter-btn" onclick="filter('pdpa',this)">🛡️ PDPA</button>
+            <button class="filter-btn" onclick="filter('ai_tech',this)">🤖 AI Tech</button>
+        </div>
+
+        {% for article in articles %}
+        <div class="article" data-cat="{{ article.category }}">
+            <div class="article-meta">
+                {% if article.category == 'editing' %}
+                <span class="cat-badge cat-editing">🎨 การปรับแต่งภาพ</span>
+                {% elif article.category == 'pdpa' %}
+                <span class="cat-badge cat-pdpa">🛡️ PDPA</span>
+                {% else %}
+                <span class="cat-badge cat-ai_tech">🤖 AI Tech</span>
+                {% endif %}
+            </div>
+            <h4>{{ article.title }}</h4>
+            <p>{{ article.content }}</p>
+            <div class="article-footer">
+                <span>คุณคิดว่าบทความนี้มีประโยชน์ไหม?</span>
+                <div class="vote-row">
+                    {% set my_vote = user_votes.get(article.id) %}
+                    <a href="/action/knowledge/{{ article.id }}/like"
+                       class="vote-btn {% if my_vote == 'like' %}voted-like{% endif %}">
+                        👍 {{ article.likes }}{% if my_vote == 'like' %} ✓{% endif %}
+                    </a>
+                    <a href="/action/knowledge/{{ article.id }}/dislike"
+                       class="vote-btn dislike {% if my_vote == 'dislike' %}voted-dislike{% endif %}">
+                        👎 {{ article.dislikes }}{% if my_vote == 'dislike' %} ✓{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+    function filter(cat, btn) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.article').forEach(a => {
+            a.style.display = (cat === 'all' || a.dataset.cat === cat) ? 'block' : 'none';
+        });
+    }
+    </script>
+</body>
+</html>

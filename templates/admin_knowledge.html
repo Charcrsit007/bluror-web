@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการเกร็ดความรู้ — Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080c14; --surface: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.08);
+            --accent: #3b82f6; --accent2: #06b6d4; --danger: #ef4444; --warning: #f59e0b; --success: #22c55e;
+            --text: #f1f5f9; --text-muted: #64748b; --text-sub: #94a3b8;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        nav {
+            background: rgba(8,12,20,0.9); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border); padding: 0 32px;
+            display: flex; align-items: center; justify-content: space-between; height: 64px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--text); text-decoration: none; }
+        .nav-brand .icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--danger), #f97316); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .nav-brand span { color: var(--danger); }
+        .nav-links { display: flex; align-items: center; gap: 4px; }
+        .nav-link { padding: 8px 14px; border-radius: 8px; color: var(--text-sub); font-size: 14px; text-decoration: none; transition: all 0.2s; }
+        .nav-link:hover { background: var(--surface); color: var(--text); }
+        .nav-link.active { background: rgba(245,158,11,0.12); color: var(--warning); }
+        .nav-link.danger { color: var(--danger); }
+
+        .main { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+        .page-header { margin-bottom: 32px; }
+        .page-header h1 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; }
+        .page-header h1 span { color: var(--warning); }
+
+        /* Add form */
+        .add-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; margin-bottom: 32px; }
+        .add-card .card-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-sub); margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: 200px 1fr; gap: 16px; margin-bottom: 16px; }
+        label { display: block; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+        select, input[type=text], textarea {
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 14px; color: var(--text);
+            font-family: 'Sarabun', sans-serif; font-size: 14px; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        select:focus, input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        select option { background: #1e293b; }
+        textarea { resize: vertical; min-height: 80px; }
+        .btn-add { padding: 10px 24px; background: linear-gradient(135deg, var(--success), #16a34a); border: none; border-radius: 10px; color: #fff; font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-add:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* Table */
+        .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { background: rgba(255,255,255,0.03); padding: 14px 20px; text-align: left; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid var(--border); }
+        tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(255,255,255,0.02); }
+        tbody td { padding: 14px 20px; font-size: 14px; color: var(--text-sub); vertical-align: middle; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .cat-editing { background: rgba(59,130,246,0.15); color: #93c5fd; }
+        .cat-pdpa { background: rgba(245,158,11,0.15); color: #fcd34d; }
+        .cat-ai_tech { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+        .action-btns { display: flex; gap: 8px; }
+        .btn-edit { padding: 6px 14px; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; color: var(--warning); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Sarabun',sans-serif; }
+        .btn-edit:hover { background: rgba(245,158,11,0.2); }
+        .btn-del { padding: 6px 14px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; color: var(--danger); font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.2s; }
+        .btn-del:hover { background: rgba(239,68,68,0.2); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #0d1220; border: 1px solid var(--border); border-radius: 20px; padding: 32px; width: 560px; max-width: 90vw; }
+        .modal h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 24px; color: var(--warning); }
+        .modal-footer { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+        .btn-cancel { padding: 10px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text-sub); font-family: 'Sarabun', sans-serif; font-size: 14px; cursor: pointer; }
+        .btn-save { padding: 10px 24px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 10px; color: #fff; font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/admin" class="nav-brand"><div class="icon">👑</div>Blu<span>ror</span> Admin</a>
+        <div class="nav-links">
+            <a href="/admin" class="nav-link">📊 Dashboard</a>
+            <a href="/admin/knowledge" class="nav-link active">📝 จัดการความรู้</a>
+            <a href="/" class="nav-link">← หน้าผู้ใช้</a>
+            <a href="/logout" class="nav-link danger">ออก</a>
+        </div>
+    </nav>
+
+    <div class="main">
+        <div class="page-header">
+            <h1>จัดการ<span>เนื้อหาความรู้</span></h1>
+        </div>
+
+        <!-- Add form -->
+        <div class="add-card">
+            <div class="card-title">✨ เพิ่มบทความใหม่</div>
+            <form action="/admin/knowledge/add" method="POST">
+                <div class="form-row">
+                    <div>
+                        <label>หมวดหมู่</label>
+                        <select name="category" required>
+                            <option value="editing">🎨 การปรับแต่งภาพ</option>
+                            <option value="pdpa">🛡️ กฎหมาย PDPA</option>
+                            <option value="ai_tech">🤖 เทคโนโลยี AI</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>หัวข้อบทความ</label>
+                        <input type="text" name="title" placeholder="ชื่อบทความ..." required>
+                    </div>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label>เนื้อหา</label>
+                    <textarea name="content" placeholder="เนื้อหาบทความ..." required></textarea>
+                </div>
+                <button type="submit" class="btn-add">➕ บันทึกบทความ</button>
+            </form>
+        </div>
+
+        <!-- Table -->
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>หมวดหมู่</th><th>หัวข้อ</th><th>👍 / 👎</th><th class="text-center">จัดการ</th></tr>
+                </thead>
+                <tbody>
+                    {% for article in articles %}
+                    <tr>
+                        <td>#{{ article.id }}</td>
+                        <td>
+                            {% if article.category == 'editing' %}<span class="badge cat-editing">🎨 ปรับแต่งภาพ</span>
+                            {% elif article.category == 'pdpa' %}<span class="badge cat-pdpa">🛡️ PDPA</span>
+                            {% else %}<span class="badge cat-ai_tech">🤖 AI Tech</span>{% endif %}
+                        </td>
+                        <td style="color:var(--text); max-width:300px;">{{ article.title }}</td>
+                        <td><span style="color:var(--success);">{{ article.likes }}</span> / <span style="color:var(--danger);">{{ article.dislikes }}</span></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-edit"
+                                    data-id="{{ article.id }}"
+                                    data-cat="{{ article.category }}"
+                                    data-title="{{ article.title | e }}"
+                                    data-content="{{ article.content | e }}"
+                                    onclick="openEditFromBtn(this)">✏️ แก้ไข</button>
+                                <a href="/admin/knowledge/delete/{{ article.id }}" class="btn-del" onclick="return confirm('ลบบทความนี้?')">🗑️ ลบ</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h3>✏️ แก้ไขบทความ</h3>
+            <form id="editForm" method="POST">
+                <div style="margin-bottom:16px;">
+                    <label>หมวดหมู่</label>
+                    <select name="category" id="edit-cat">
+                        <option value="editing">🎨 การปรับแต่งภาพ</option>
+                        <option value="pdpa">🛡️ กฎหมาย PDPA</option>
+                        <option value="ai_tech">🤖 เทคโนโลยี AI</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label>หัวข้อบทความ</label>
+                    <input type="text" name="title" id="edit-title" required>
+                </div>
+                <div>
+                    <label>เนื้อหา</label>
+                    <textarea name="content" id="edit-content" rows="4" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeEdit()">ยกเลิก</button>
+                    <button type="submit" class="btn-save">💾 บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function openEditFromBtn(btn) {
+        var id      = btn.getAttribute('data-id');
+        var cat     = btn.getAttribute('data-cat');
+        var title   = btn.getAttribute('data-title');
+        var content = btn.getAttribute('data-content');
+        document.getElementById('editForm').action = '/admin/knowledge/edit/' + id;
+        document.getElementById('edit-cat').value = cat;
+        document.getElementById('edit-title').value = title;
+        document.getElementById('edit-content').value = content;
+        document.getElementById('editModal').classList.add('open');
+    }
+    function closeEdit() {
+        document.getElementById('editModal').classList.remove('open');
+    }
+    document.getElementById('editModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEdit();
+    });
+    </script>
+</body>
+</html>
